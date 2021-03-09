@@ -185,6 +185,43 @@ class LDAPDelegate(Persistent):
         self.__dict__['_servers'] = value
 
 
+    @property
+    def bind_dn(self):
+        dynamic_bind_dn = os.environ.get('PLONE_LDAP_BIND_DN')
+        if dynamic_bind_dn:
+            return dynamic_bind_dn
+
+        return self.__dict__['bind_dn']
+
+
+    @bind_dn.setter
+    def bind_dn(self, value):
+        if os.environ.get('PLONE_LDAP_BIND_DN'):
+            logger.warn('Ignored write attempt at %r.bind_dn' % self)
+            return
+
+        self.__dict__['bind_dn'] = value
+
+
+    @property
+    def bind_pwd(self):
+        # NOTE: Dollar signs must be escaped with $$ in zope.conf
+        dynamic_bind_pwd = os.environ.get('PLONE_LDAP_BIND_PWD')
+        if dynamic_bind_pwd:
+            return dynamic_bind_pwd
+
+        return self.__dict__['bind_pwd']
+
+
+    @bind_pwd.setter
+    def bind_pwd(self, value):
+        if os.environ.get('PLONE_LDAP_BIND_PWD'):
+            logger.warn('Ignored write attempt at %r.bind_pwd' % self)
+            return
+
+        self.__dict__['bind_pwd'] = value
+
+
     def getDynamicServers(self):
         """Return list of LDAP servers defined via env vars (if any).
         """
