@@ -22,6 +22,7 @@ from ldapurl import isLDAPUrl
 from ldap.dn import escape_dn_chars
 from ldap.filter import filter_format
 import logging
+import os
 import random
 
 # Zope imports
@@ -155,6 +156,57 @@ class LDAPDelegate(Persistent):
             self._servers = servers
 
         return servers
+
+
+    @property
+    def _servers(self):
+        """If any LDAP servers defined via environment variables are found,
+        return them instead of the plugin's persistent server list.
+
+        Servers defined via environment variables will therefore shadow
+        the persistent server list in its entirety.
+        """
+
+        dynamic_servers = self.getDynamicServers()
+        if dynamic_servers:
+            return dynamic_servers
+
+        return self.__dict__.get('_servers', [])
+
+
+    @_servers.setter
+    def _servers(self, value):
+        if self.getDynamicServers():
+            # TODO: Need to have a closer look at how to best handle
+            # attempts to add / delete servers in various scenarios.
+            logger.warn('Ignored write attempt at %r._servers' % self)
+            return
+
+        self.__dict__['_servers'] = value
+
+
+    def getDynamicServers(self):
+        """Return list of LDAP servers defined via env vars (if any).
+        """
+        dynamic_servers = []
+
+        # TODO: Support for multiple servers
+        if 'PLONE_LDAP_HOST' in os.environ:
+            host = os.environ['PLONE_LDAP_HOST']
+            port = int(os.environ.get('PLONE_LDAP_PORT', 389))
+            protocol = os.environ.get('PLONE_LDAP_PROTOCOL', 'ldap')
+            conn_timeout = int(os.environ.get('PLONE_LDAP_CONN_TIMEOUT', 5))
+            op_timeout = int(os.environ.get('PLONE_LDAP_OP_TIMEOUT', -1))
+
+            dynamic_servers.append({
+                'host': host,
+                'port': port,
+                'protocol': protocol,
+                'conn_timeout': conn_timeout,
+                'op_timeout': op_timeout,
+            })
+
+        return dynamic_servers
 
 
     def deleteServers(self, position_list=()):
