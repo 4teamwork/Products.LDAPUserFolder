@@ -221,6 +221,23 @@ class LDAPDelegate(Persistent):
 
         self.__dict__['bind_pwd'] = value
 
+    @property
+    def u_base(self):
+        dynamic_users_base = os.environ.get('PLONE_LDAP_USERS_BASE')
+        if dynamic_users_base:
+            return dynamic_users_base
+
+        return self.__dict__['u_base']
+
+
+    @u_base.setter
+    def u_base(self, value):
+        if os.environ.get('PLONE_LDAP_USERS_BASE'):
+            logger.warn('Ignored write attempt at %r.u_base' % self)
+            return
+
+        self.__dict__['u_base'] = value
+
 
     def getDynamicServers(self):
         """Return list of LDAP servers defined via env vars (if any).

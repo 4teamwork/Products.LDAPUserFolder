@@ -391,6 +391,41 @@ class LDAPUserFolder(BasicUserFolder):
             return form(manage_tabs_message=msg)
 
 
+    @property
+    def users_base(self):
+        dynamic_users_base = os.environ.get('PLONE_LDAP_USERS_BASE')
+        if dynamic_users_base:
+            return dynamic_users_base
+
+        return self.__dict__['users_base']
+
+
+    @users_base.setter
+    def users_base(self, value):
+        if os.environ.get('PLONE_LDAP_USERS_BASE'):
+            logger.warn('Ignored write attempt at %r.users_base' % self)
+            return
+
+        self.__dict__['users_base'] = value
+
+    @property
+    def groups_base(self):
+        dynamic_groups_base = os.environ.get('PLONE_LDAP_GROUPS_BASE')
+        if dynamic_groups_base:
+            return dynamic_groups_base
+
+        return self.__dict__['groups_base']
+
+
+    @groups_base.setter
+    def groups_base(self, value):
+        if os.environ.get('PLONE_LDAP_GROUPS_BASE'):
+            logger.warn('Ignored write attempt at %r.groups_base' % self)
+            return
+
+        self.__dict__['groups_base'] = value
+
+
     security.declareProtected(EDIT_PERMISSION, 'manage_edit')
     def manage_edit( self, title, login_attr, uid_attr, users_base
                    , users_scope, roles,  groups_base, groups_scope
